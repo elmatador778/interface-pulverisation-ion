@@ -21,9 +21,9 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
-from core.simulation_config import SimulationConfig, ELEMENTS
-from core.mock_simulator import mock_yield_vs_energy, mock_yield_vs_angle
-from gui.param_bar import ParamBar
+from parametres_sim import SimulationConfig, ELEMENTS
+from simulateur import mock_yield_vs_energy, mock_yield_vs_angle
+from parametres import ParamBar
 
 
 def _make_swoosh_svg(color: str) -> str:

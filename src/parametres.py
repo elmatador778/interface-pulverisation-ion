@@ -6,7 +6,7 @@ Affichée en haut de chaque panneau graphique.
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QFrame
 from PyQt5.QtCore import Qt
 
-from core.simulation_config import SimulationConfig
+from parametres_sim import SimulationConfig
 
 
 class _Chip(QLabel):

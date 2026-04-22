@@ -22,13 +22,13 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QSize
 from PyQt5.QtGui import QFont, QIcon, QPalette, QColor
 
-from gui.panel_config import ConfigPanel
-from gui.panel_yield import YieldPanel
-from gui.panel_trajectories import TrajectoriesPanel
-from gui.panel_postprocess import PostProcessPanel
-from gui.panel_runner import RunnerPanel
-from gui.panel_help import HelpPanel
-from core.simulation_config import SimulationConfig
+from config import ConfigPanel
+from rendement import YieldPanel
+from trajectoires import TrajectoriesPanel
+from resultats import PostProcessPanel
+from simulation import RunnerPanel
+from aide import HelpPanel
+from parametres_sim import SimulationConfig
 
 
 

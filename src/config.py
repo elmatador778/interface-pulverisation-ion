@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont, QColor, QPalette
 
-from core.simulation_config import (
+from parametres_sim import (
     SimulationConfig, IonParameters, TargetLayer,
     PhysicsParameters, OutputOptions,
     ELEMENTS, INTERATOMIC_POTENTIALS, SURFACE_BINDING_MODELS,

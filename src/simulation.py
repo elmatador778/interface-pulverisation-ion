@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QTextCursor
 
-from core.simulation_config import SimulationConfig
+from parametres_sim import SimulationConfig
 
 
 # ---------------------------------------------------------------------------

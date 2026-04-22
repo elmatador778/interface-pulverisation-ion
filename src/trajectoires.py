@@ -17,8 +17,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
-from core.simulation_config import SimulationConfig
-from core.mock_simulator import mock_trajectories, mock_sputtered_trajectories
+from parametres_sim import SimulationConfig
+from simulateur import mock_trajectories, mock_sputtered_trajectories
 
 
 class TrajCanvas(FigureCanvas):
