@@ -347,9 +347,9 @@ class MainWindow(QMainWindow):
         self._config_panel.config_changed.connect(self._on_config_changed)
         self._runner_panel.simulation_done.connect(self._on_simulation_done)
 
-    # ------------------------------------------------------------------
+    
     # Panneaux
-    # ------------------------------------------------------------------
+    
 
     def _build_panels(self):
         self._config_panel = ConfigPanel()
@@ -365,9 +365,9 @@ class MainWindow(QMainWindow):
         self._post_panel.update_config(cfg)
         self._runner_panel.update_config(cfg)
 
-    # ------------------------------------------------------------------
+    
     # Dock widgets
-    # ------------------------------------------------------------------
+    
 
     def _build_docks(self):
         self._tabs = QTabWidget()
@@ -380,9 +380,9 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(self._help_panel,    "❓  Aide")
         self.setCentralWidget(self._tabs)
 
-    # ------------------------------------------------------------------
+    
     # Menu
-    # ------------------------------------------------------------------
+    
 
     def _build_menu(self):
         menu = self.menuBar()
@@ -456,9 +456,9 @@ class MainWindow(QMainWindow):
         act_bca.triggered.connect(self._show_bca_info)
         help_menu.addAction(act_bca)
 
-    # ------------------------------------------------------------------
+    
     # Barre de statut
-    # ------------------------------------------------------------------
+    
 
     def _build_status_bar(self):
         self._status = QStatusBar()
@@ -488,9 +488,9 @@ class MainWindow(QMainWindow):
         ver_label.setStyleSheet("color: #9E9E9E; font-size: 10px; padding-right: 4px;")
         self._status.addPermanentWidget(ver_label)
 
-    # ------------------------------------------------------------------
+    
     # Thème clair / sombre
-    # ------------------------------------------------------------------
+    
 
     def _toggle_theme(self):
         self._dark_mode = not self._dark_mode
@@ -591,13 +591,13 @@ class MainWindow(QMainWindow):
                 "figure.dpi":        100,
             })
 
-    # ------------------------------------------------------------------
+    
     # Disposition
-    # ------------------------------------------------------------------
+    
 
-    # ------------------------------------------------------------------
+    
     # Slots
-    # ------------------------------------------------------------------
+    
 
     def _on_config_changed(self, cfg: SimulationConfig):
         self._yield_panel.update_config(cfg)
