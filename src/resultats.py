@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QLabel, QSpinBox, QDoubleSpinBox, QPushButton,
     QCheckBox, QFileDialog, QFormLayout, QTabWidget,
     QTableWidget, QTableWidgetItem, QFrame,
+    QMessageBox, QDialog, QDialogButtonBox,
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -21,6 +22,43 @@ from matplotlib.figure import Figure
 
 from parametres_sim import SimulationConfig
 from simulateur import mock_angular_distribution, mock_energy_distribution
+
+
+def _export_figure(parent, fig):
+    dlg = QDialog(parent)
+    dlg.setWindowTitle("Exporter la figure")
+    dlg.setFixedWidth(340)
+    layout = QVBoxLayout(dlg)
+
+    layout.addWidget(QLabel("Résolution (DPI) :"))
+    dpi_spin = QSpinBox()
+    dpi_spin.setRange(72, 600)
+    dpi_spin.setValue(150)
+    dpi_spin.setSuffix(" dpi")
+    layout.addWidget(dpi_spin)
+
+    note = QLabel("72 dpi = écran  |  150 dpi = standard  |  300 dpi = impression")
+    note.setStyleSheet("color: #757575; font-size: 10px;")
+    layout.addWidget(note)
+
+    buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+    buttons.accepted.connect(dlg.accept)
+    buttons.rejected.connect(dlg.reject)
+    layout.addWidget(buttons)
+
+    if dlg.exec_() != QDialog.Accepted:
+        return
+
+    path, _ = QFileDialog.getSaveFileName(
+        parent, "Enregistrer la figure", "",
+        "PNG haute qualité (*.png);;PDF vectoriel (*.pdf);;SVG vectoriel (*.svg)"
+    )
+    if not path:
+        return
+
+    fig.savefig(path, dpi=dpi_spin.value(), bbox_inches="tight")
+    QMessageBox.information(parent, "Export réussi",
+        f"Figure enregistrée :\n{path}\n({dpi_spin.value()} dpi)")
 
 
 class PostCanvas(FigureCanvas):
@@ -319,6 +357,4 @@ class PostProcessPanel(QWidget):
         table.resizeColumnsToContents()
 
     def _save_fig(self, canvas: FigureCanvas):
-        path, _ = QFileDialog.getSaveFileName(self, "Exporter la figure", "", "PNG (*.png);;PDF (*.pdf);;SVG (*.svg)")
-        if path:
-            canvas.figure.savefig(path, dpi=150, bbox_inches="tight")
+        _export_figure(self, canvas.figure)
