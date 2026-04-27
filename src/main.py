@@ -6,6 +6,7 @@ Point d'entrée principal de l'application.
 
 import sys
 import os
+import json
 
 # Ajouter src/ au chemin Python afin que les imports relatifs fonctionnent
 sys.path.insert(0, os.path.dirname(__file__))
@@ -19,7 +20,7 @@ from PyQt5.QtWidgets import (
     QAction, QMenuBar, QMessageBox, QSizePolicy,
     QPushButton, QStyleFactory,
 )
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, QSettings
 from PyQt5.QtGui import QFont, QIcon, QPalette, QColor
 
 from config import ConfigPanel
@@ -330,6 +331,10 @@ QDockWidget::close-button:hover, QDockWidget::float-button:hover { background: #
 # Fenêtre principale
 
 
+_AUTOSAVE_PATH = os.path.join(os.path.dirname(__file__), ".last_config.json")
+_MAX_RECENT = 6
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -338,6 +343,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(QSize(900, 600))
 
         self._dark_mode = False
+        self._settings = QSettings("ONERA", "CSiPI_GUI")
 
         self._build_panels()
         self._build_menu()
@@ -346,6 +352,8 @@ class MainWindow(QMainWindow):
 
         self._config_panel.config_changed.connect(self._on_config_changed)
         self._runner_panel.simulation_done.connect(self._on_simulation_done)
+
+        self._restore_last_config()
 
     
     # Panneaux
@@ -387,7 +395,7 @@ class MainWindow(QMainWindow):
     def _build_menu(self):
         menu = self.menuBar()
 
-        # ── Fichier ─────────────────────────────────────────────────
+        # ── Fichier 
         file_menu = menu.addMenu("Fichier")
 
         act_new = QAction("Nouvelle configuration", self)
@@ -400,12 +408,12 @@ class MainWindow(QMainWindow):
 
         act_load = QAction("Charger une configuration JSON…", self)
         act_load.setShortcut("Ctrl+O")
-        act_load.triggered.connect(lambda: self._config_panel._load_config())
+        act_load.triggered.connect(self._load_config)
         file_menu.addAction(act_load)
 
         act_save = QAction("Sauvegarder la configuration JSON…", self)
         act_save.setShortcut("Ctrl+S")
-        act_save.triggered.connect(lambda: self._config_panel._save_config())
+        act_save.triggered.connect(self._save_config)
         file_menu.addAction(act_save)
 
         act_export_in = QAction("Exporter le fichier d'entrée CSiPI (.in)…", self)
@@ -415,12 +423,17 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        self._recent_menu = file_menu.addMenu("Fichiers récents")
+        self._refresh_recent_menu()
+
+        file_menu.addSeparator()
+
         act_quit = QAction("Quitter", self)
         act_quit.setShortcut("Ctrl+Q")
         act_quit.triggered.connect(self.close)
         file_menu.addAction(act_quit)
 
-        # ── Affichage ───────────────────────────────────────────────
+        # ── Affichage 
         view_menu = menu.addMenu("Affichage")
 
         act_toggle_theme = QAction("Basculer thème clair/sombre", self)
@@ -428,7 +441,7 @@ class MainWindow(QMainWindow):
         act_toggle_theme.triggered.connect(self._toggle_theme)
         view_menu.addAction(act_toggle_theme)
 
-        # ── Simulation ───────────────────────────────────────────────
+        # ── Simulation 
         sim_menu = menu.addMenu("Simulation")
 
         act_run = QAction("Lancer la simulation", self)
@@ -445,7 +458,7 @@ class MainWindow(QMainWindow):
         for act in (act_cfg, act_exec):
             sim_menu.addAction(act)
 
-        # ── Aide ────────────────────────────────────────────────────
+        # ── Aide ───
         help_menu = menu.addMenu("Aide")
 
         act_about = QAction("À propos de CSiPI GUI", self)
@@ -625,6 +638,77 @@ class MainWindow(QMainWindow):
         self._yield_panel.update_config(cfg)
         self._traj_panel.update_config(cfg)
         self._post_panel.update_config(cfg)
+
+    def _load_config(self):
+        from PyQt5.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getOpenFileName(self, "Charger une configuration", "", "JSON (*.json)")
+        if path:
+            self._open_config_file(path)
+
+    def _save_config(self):
+        from PyQt5.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getSaveFileName(self, "Enregistrer la configuration", "", "JSON (*.json)")
+        if path:
+            self._config_panel.collect_config().to_json(path)
+            self._add_recent(path)
+            self._refresh_recent_menu()
+            QMessageBox.information(self, "Sauvegardé", f"Configuration enregistrée :\n{path}")
+
+    def _open_config_file(self, path: str):
+        try:
+            self._config_panel.config = SimulationConfig.from_json(path)
+            self._config_panel._load_config_to_ui()
+            self._config_panel.config_changed.emit(self._config_panel.config)
+            self._add_recent(path)
+            self._refresh_recent_menu()
+            self._autosave()
+            self._status_label.setText(f"Config chargée : {os.path.basename(path)}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Impossible de charger :\n{e}")
+
+    def _autosave(self):
+        try:
+            self._config_panel.collect_config().to_json(_AUTOSAVE_PATH)
+        except Exception:
+            pass
+
+    def _restore_last_config(self):
+        if os.path.exists(_AUTOSAVE_PATH):
+            try:
+                self._config_panel.config = SimulationConfig.from_json(_AUTOSAVE_PATH)
+                self._config_panel._load_config_to_ui()
+                self._config_panel.config_changed.emit(self._config_panel.config)
+                self._status_label.setText("Dernière configuration restaurée automatiquement.")
+            except Exception:
+                pass
+
+    def _add_recent(self, path: str):
+        recents = self._settings.value("recent_files", []) or []
+        if path in recents:
+            recents.remove(path)
+        recents.insert(0, path)
+        self._settings.setValue("recent_files", recents[:_MAX_RECENT])
+
+    def _refresh_recent_menu(self):
+        self._recent_menu.clear()
+        recents = self._settings.value("recent_files", []) or []
+        if not recents:
+            self._recent_menu.addAction("(aucun fichier récent)").setEnabled(False)
+            return
+        for path in recents:
+            name = os.path.basename(path)
+            act = QAction(f"{name}  —  {os.path.dirname(path)}", self)
+            act.setData(path)
+            act.triggered.connect(lambda _checked, p=path: self._open_config_file(p))
+            self._recent_menu.addAction(act)
+        self._recent_menu.addSeparator()
+        clear_act = QAction("Effacer l'historique", self)
+        clear_act.triggered.connect(self._clear_recent)
+        self._recent_menu.addAction(clear_act)
+
+    def _clear_recent(self):
+        self._settings.setValue("recent_files", [])
+        self._refresh_recent_menu()
 
     def _new_config(self):
         reply = QMessageBox.question(
